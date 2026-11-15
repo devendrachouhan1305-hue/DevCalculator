@@ -1,0 +1,42 @@
+name: Build Dev Calculator for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: python -m pip install pyinstaller
+
+      - name: Build EXE
+        run: pyinstaller --onefile --windowed --name DevCalculator dev_calculator.py
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build Installer
+        run: iscc DevCalculator_Setup.iss
+
+      - name: Create ZIP
+        run: |
+          Compress-Archive -Path dist/DevCalculator.exe, Output/DevCalculator_Setup.exe -DestinationPath DevCalculator_Full.zip
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevCalculator-Windows-Full-Package
+          path: DevCalculator_Full.zip
